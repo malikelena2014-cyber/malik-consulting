@@ -20,23 +20,10 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import base64
           import re
 
-          snippet = '''
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-    (function(m,e,t,r,i,k,a){
-        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=112547387', 'ym');
-
-    ym(112547387, 'init', {ssr:true, clickmap:true, referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/112547387" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
-'''
+          snippet = base64.b64decode('PCEtLSBZYW5kZXguTWV0cmlrYSBjb3VudGVyIC0tPgo8c2NyaXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCI+CiAgICAoZnVuY3Rpb24obSxlLHQscixpLGssYSl7CiAgICAgICAgbVtpXT1tW2ldfHxmdW5jdGlvbigpeyhtW2ldLmE9bVtpXS5hfHxbXSkucHVzaChhcmd1bWVudHMpfTsKICAgICAgICBtW2ldLmw9MSpuZXcgRGF0ZSgpOwogICAgICAgIGZvciAodmFyIGogPSAwOyBqIDwgZG9jdW1lbnQuc2NyaXB0cy5sZW5ndGg7IGorKykge2lmIChkb2N1bWVudC5zY3JpcHRzW2pdLnNyYyA9PT0gcikgeyByZXR1cm47IH19CiAgICAgICAgaz1lLmNyZWF0ZUVsZW1lbnQodCksYT1lLmdldEVsZW1lbnRzQnlUYWdOYW1lKHQpWzBdLGsuYXN5bmM9MSxrLnNyYz1yLGEucGFyZW50Tm9kZS5pbnNlcnRCZWZvcmUoayxhKQogICAgfSkod2luZG93LCBkb2N1bWVudCwnc2NyaXB0JywnaHR0cHM6Ly9tYy55YW5kZXgucnUvbWV0cmlrYS90YWcuanM/aWQ9MTEyNTQ3Mzg3JywgJ3ltJyk7CgogICAgeW0oMTEyNTQ3Mzg3LCAnaW5pdCcsIHtzc3I6dHJ1ZSwgY2xpY2ttYXA6dHJ1ZSwgcmVmZXJyZXI6IGRvY3VtZW50LnJlZmVycmVyLCB1cmw6IGxvY2F0aW9uLmhyZWYsIGFjY3VyYXRlVHJhY2tCb3VuY2U6dHJ1ZSwgdHJhY2tMaW5rczp0cnVlfSk7Cjwvc2NyaXB0Pgo8bm9zY3JpcHQ+PGRpdj48aW1nIHNyYz0iaHR0cHM6Ly9tYy55YW5kZXgucnUvd2F0Y2gvMTEyNTQ3Mzg3IiBzdHlsZT0icG9zaXRpb246YWJzb2x1dGU7IGxlZnQ6LTk5OTlweDsiIGFsdD0iIiAvPjwvZGl2Pjwvbm9zY3JpcHQ+CjwhLS0gL1lhbmRleC5NZXRyaWthIGNvdW50ZXIgLS0+').decode('utf-8')
 
           changed = []
           for filename in ('index.html', 'privacy.html'):
@@ -47,7 +34,7 @@ jobs:
               match = re.search(r'<body\b[^>]*>', text, flags=re.IGNORECASE)
               if not match:
                   raise RuntimeError(f'Opening <body> tag not found in {filename}')
-              text = text[:match.end()] + snippet + text[match.end():]
+              text = text[:match.end()] + '\n' + snippet + '\n' + text[match.end():]
               path.write_text(text, encoding='utf-8')
               changed.append(filename)
 
