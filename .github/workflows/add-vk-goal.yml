@@ -1,0 +1,42 @@
+name: Add VK Metrika goal
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add vk_click tracking
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app.js')
+          s=p.read_text(encoding='utf-8')
+          marker="// Metrika: explicit VK click goal because the site uses vk.ru."
+          if marker not in s:
+              addition='''\n\n// Metrika: explicit VK click goal because the site uses vk.ru.\ndocument.addEventListener('DOMContentLoaded', function(){\n  document.querySelectorAll('a[href*="vk.ru/"]').forEach(function(link){\n    link.addEventListener('click', function(){\n      if(typeof ym==='function'){ym(112547387,'reachGoal','vk_click');}\n    });\n  });\n});\n'''
+              s += addition
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit app.js and remove installer
+        shell: bash
+        run: |
+          rm -f .github/workflows/add-vk-goal.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js .github/workflows/add-vk-goal.yml
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "Track VK clicks in Yandex Metrika"
+          git push
