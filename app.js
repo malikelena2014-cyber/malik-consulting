@@ -240,3 +240,13 @@ const reportDialog=document.querySelector('.report-dialog');
 document.querySelectorAll('[data-report]').forEach(button=>button.addEventListener('click',()=>{const img=document.getElementById('report-original');img.src=button.dataset.report;img.alt=button.dataset.title;document.getElementById('report-dialog-title').textContent=button.dataset.title;reportDialog.showModal();}));
 document.querySelector('.report-dialog-close').addEventListener('click',()=>reportDialog.close());
 reportDialog.addEventListener('click',e=>{if(e.target===reportDialog){const r=reportDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)reportDialog.close();}});
+
+
+// Metrika: explicit VK click goal because the site uses vk.ru.
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('a[href*="vk.ru/"]').forEach(function(link){
+    link.addEventListener('click', function(){
+      if(typeof ym==='function'){ym(112547387,'reachGoal','vk_click');}
+    });
+  });
+});
