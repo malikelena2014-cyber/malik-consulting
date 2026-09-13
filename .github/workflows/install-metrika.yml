@@ -1,0 +1,68 @@
+name: Install Yandex Metrika
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Insert Metrika counter into site pages
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          snippet = '''
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=112547387', 'ym');
+
+    ym(112547387, 'init', {ssr:true, clickmap:true, referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/112547387" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+'''
+
+          changed = []
+          for filename in ('index.html', 'privacy.html'):
+              path = Path(filename)
+              text = path.read_text(encoding='utf-8')
+              if '112547387' in text:
+                  continue
+              match = re.search(r'<body\b[^>]*>', text, flags=re.IGNORECASE)
+              if not match:
+                  raise RuntimeError(f'Opening <body> tag not found in {filename}')
+              text = text[:match.end()] + snippet + text[match.end():]
+              path.write_text(text, encoding='utf-8')
+              changed.append(filename)
+
+          print('Updated:', ', '.join(changed) if changed else 'nothing')
+          PY
+
+      - name: Commit updated pages
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html privacy.html; then
+            echo "Metrika already installed; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html privacy.html
+          git commit -m "Install Yandex Metrika counter 112547387"
+          git push
