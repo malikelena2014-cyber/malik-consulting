@@ -1,0 +1,44 @@
+name: Add Metrika diagnostic goal
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add diagnostic_open reachGoal
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app.js')
+          s = p.read_text(encoding='utf-8')
+          old = "window.openContact=()=>showPanel('contactModal');"
+          new = "window.openContact=()=>{if(typeof ym==='function'){ym(112547387,'reachGoal','diagnostic_open');}showPanel('contactModal');};"
+          if "diagnostic_open" not in s:
+              if old not in s:
+                  raise RuntimeError('Expected openContact definition not found')
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit app.js and remove installer
+        shell: bash
+        run: |
+          rm -f .github/workflows/add-diagnostic-goal.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js .github/workflows/add-diagnostic-goal.yml
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "Track diagnostic contact opens in Yandex Metrika"
+          git push
